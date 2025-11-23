@@ -5,7 +5,17 @@ import { aiClient } from '../services/aiClient';
 type Message = { role: 'user' | 'assistant'; content: string; ts: number; task?: TaskPlan | null };
 type TaskPlan = { title: string; reasoning: string; acceptance: string[]; steps: string[]; risks?: string[]; references?: string[] };
 
-const SYSTEM_PROMPT = `你是项目中的资深软件工程助理，负责两类输出：\n1) [[MODE: TASK]] 当用户意图是可执行的产品/代码/配置改动、修复或实现请求时\n2) [[MODE: HELP]] 当用户主要在咨询、理解、比较、建议、排查思路时\n\n决策准则：\n- 满足任一条件则判定为任务（TASK）：\n  - 存在明确的改动动词：实现/新增/修复/改进/重构/接入/部署/配置/集成/替换/迁移/优化\n  - 包含代码片段、文件路径、接口、参数、验收标准、里程碑或对页面/组件的具体改动说明\n  - 指定了预期结果或交付物（页面、接口、功能、文档、测试）\n- 否则为帮助（HELP）：\n  - 以“为什么/如何/能否/是什么/对比/建议/思路/排查”为主的咨询与解答\n  - 需求尚不清晰，缺少可执行边界时先帮助澄清与给出方案\n- 混合情况：若既有咨询又有明确执行意图，先简要解答关键疑问，再输出 [[MODE: TASK]] 任务方案\n\n输出规范：\n- [[MODE: HELP]]：\n  - 使用简洁、结构化要点回答；必要时给出代码引用如 file_path:line_number\n- [[MODE: TASK]]：只输出一段 JSON（用\`\`\`json 代码块包裹），字段：\n  - title\n  - reasoning\n  - acceptance\n  - steps\n  - risks\n  - references\n\n代码引用示例：src/services/aiService.ts:5, src/components/tasks/AITaskParser.tsx:16, src/App.tsx:114`;
+function buildSystemPrompt(mbti?: string) {
+  const header = `你是资深任务管理助理，专注个人与团队的任务规划与执行。你仅围绕任务管理领域进行解答或输出可执行方案。`;
+  const scope = `领域覆盖：四象限法（重要/紧急）、GTD（收集/澄清/组织/执行/回顾）、番茄钟配置与节奏、优先级/到期日/场景分类、进度与复盘。`;
+  const mbtiLine = mbti ? `用户MBTI：${mbti}。你的建议需自动结合该类型的思维与行为偏好。` : `如用户提供MBTI类型，请结合其偏好给出陪伴式建议。`;
+  const modes = `输出模式：\n1) [[MODE: TASK]] 当用户提出明确的任务改动/计划制定/分解执行/优先级与到期设置/四象限归类/GTD流转/番茄钟配置等可执行请求时\n2) [[MODE: HELP]] 当用户进行咨询、比较、排查、方法选择或需要澄清边界时`;
+  const decide = `判定：出现“添加/拆分/制定/安排/规划/配置/归类/流转/优化/执行/验收”及具体任务要素（标题/优先级/到期/时长/场景）视为[[MODE: TASK]]；否则[[MODE: HELP]]。若混合，先简答关键疑问，再给[[MODE: TASK]]。`;
+  const help = `[[MODE: HELP]] 规范：用简洁要点回答，给出可操作建议、方法对比、注意事项与风险，必要时引用仓库位置如 src/components/tasks/TaskManager.tsx:178。`;
+  const task = `[[MODE: TASK]] 规范：只输出一段JSON（使用\`\`\`json代码块），字段：\n- title：一句话任务标题\n- reasoning：为何要做（1–2句）\n- acceptance：3–6个可验证验收点\n- steps：4–8个实施步骤（含四象限/GTD/番茄钟/优先级/到期等具体动作）\n- risks：可能风险与规避\n- references：相关代码位置或链接（如 src/components/tasks/TaskManager.tsx:178）`;
+  const tone = `风格：中文、清晰、以执行为中心；不输出或记录任何密钥；如需配置，提示使用环境变量。`;
+  return [header, scope, mbtiLine, modes, decide, help, task, tone].join('\n');
+}
 
 function parseTaskFromText(text: string): TaskPlan | null {
   const mode = text.trim().startsWith('[[MODE: TASK]]');
@@ -31,7 +41,7 @@ function parseTaskFromText(text: string): TaskPlan | null {
   }
 }
 
-export default function ChatPage() {
+export default function ChatPage({ mbti }: { mbti?: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -53,7 +63,7 @@ export default function ChatPage() {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const combined = `${SYSTEM_PROMPT}\n\n${userMsg.content}`;
+      const combined = `${buildSystemPrompt(mbti)}\n\n${userMsg.content}`;
       const text = await aiClient.respond(combined, { signal: controller.signal });
       const task = parseTaskFromText(text);
       const assistantMsg: Message = { role: 'assistant', content: text, ts: Date.now(), task };

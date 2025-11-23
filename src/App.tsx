@@ -149,7 +149,7 @@ function App() {
         <div className="flex-1 p-6 pb-20 md:pb-6">
           {activeTab === 'timer' && <PomodoroTimer userMBTI={mbtiResult!.type} />}
           {activeTab === 'tasks' && <TaskManager userMBTI={mbtiResult!.type} />}
-          {activeTab === 'parser' && <ChatPage />}
+          {activeTab === 'parser' && <ChatPage mbti={mbtiResult!.type} />}
           {activeTab === 'profile' && (
             <Profile
               mbtiType={mbtiResult?.type ?? '未知'}
