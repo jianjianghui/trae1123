@@ -7,9 +7,10 @@ type ProfileProps = {
   methods: string[];
   onUpdateProfile?: (profile: { name: string; code: string; avatarUrl?: string }) => void;
   onUpdateMethods?: (methods: string[]) => void;
+  onOpenMBTIResult?: () => void;
 };
 
-export default function Profile({ mbtiType, name, code, avatarUrl, methods, onUpdateMethods, onUpdateProfile }: ProfileProps) {
+export default function Profile({ mbtiType, name, code, avatarUrl, methods, onUpdateMethods, onUpdateProfile, onOpenMBTIResult }: ProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [localMethods, setLocalMethods] = useState<string[]>(methods);
   const options = ["番茄钟", "四象限", "时间块", "GTD"];
@@ -43,6 +44,9 @@ export default function Profile({ mbtiType, name, code, avatarUrl, methods, onUp
         <div className="bg-white rounded-xl shadow p-4">
           <div className="text-xs text-gray-500 mb-1">MBTI 类型</div>
           <div className="text-xl font-bold text-purple-700">{mbtiType}</div>
+          <div className="mt-3">
+            <button onClick={onOpenMBTIResult} className="px-3 py-1 text-sm text-purple-600 hover:text-purple-800">查看MBTI测试总结</button>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow p-4">

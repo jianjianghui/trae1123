@@ -57,6 +57,12 @@ function App() {
     setCurrentStep('dashboard');
   };
 
+  const handleOpenMBTIResult = () => {
+    if (mbtiResult) {
+      setCurrentStep('result');
+    }
+  };
+
   const handleTaskParsed = (task: ParsedTask) => {
     console.log('任务已解析:', task);
   };
@@ -153,6 +159,7 @@ function App() {
               methods={preferredMethods}
               onUpdateMethods={setPreferredMethods}
               onUpdateProfile={setProfile}
+              onOpenMBTIResult={handleOpenMBTIResult}
             />
           )}
         </div>
