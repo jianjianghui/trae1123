@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Target, Calendar, Filter, Trash2, Edit3, CheckCircle, Clock, LayoutGrid, Workflow } from 'lucide-react';
 import { Task, TaskCategory, TaskPriority, GTDStage } from '../../types/task';
 import PomodoroTimer from '../timer/PomodoroTimer';
@@ -35,6 +35,43 @@ const TaskManager: React.FC<TaskManagerProps> = ({ userMBTI }) => {
   const [viewMode, setViewMode] = useState<'list' | 'quadrants' | 'gtd'>('list');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editCategory, setEditCategory] = useState<TaskCategory>(TaskCategory.WORK);
+  const [editPriority, setEditPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
+  const [editDuration, setEditDuration] = useState<number>(60);
+  const [editDueDateStr, setEditDueDateStr] = useState<string>('');
+
+  useEffect(() => {
+    if (editingTask) {
+      setEditTitle(editingTask.title || '');
+      setEditDescription(editingTask.description || '');
+      setEditCategory(editingTask.category);
+      setEditPriority(editingTask.priority);
+      setEditDuration(editingTask.estimatedDuration || 60);
+      setEditDueDateStr(editingTask.dueDate ? editingTask.dueDate.toISOString().slice(0, 10) : '');
+    }
+  }, [editingTask]);
+
+  const saveEdit = () => {
+    if (!editingTask) return;
+    if (!editTitle.trim()) return;
+    const updated = tasks.map(t =>
+      t.id === editingTask.id
+        ? {
+            ...t,
+            title: editTitle.trim(),
+            description: editDescription.trim() || undefined,
+            category: editCategory,
+            priority: editPriority,
+            estimatedDuration: editDuration || undefined,
+            dueDate: editDueDateStr ? new Date(editDueDateStr) : undefined,
+          }
+        : t
+    );
+    setTasks(updated);
+    setEditingTask(null);
+  };
 
   const categories = Object.values(TaskCategory);
   const priorities = Object.values(TaskPriority);
@@ -490,6 +527,67 @@ const TaskManager: React.FC<TaskManagerProps> = ({ userMBTI }) => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {editingTask && (
+          <div className="fixed inset-0 bg-black/30 flex items-end md:items-center justify-center z-50">
+            <div className="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl p-4">
+              <div className="text-base font-semibold text-gray-900 mb-3">编辑任务</div>
+              <div className="grid grid-cols-1 gap-3 mb-4">
+                <input
+                  className="px-3 py-2 border rounded-lg text-sm"
+                  placeholder="标题"
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                />
+                <textarea
+                  className="px-3 py-2 border rounded-lg text-sm"
+                  placeholder="描述"
+                  value={editDescription}
+                  onChange={e => setEditDescription(e.target.value)}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    className="px-3 py-2 border rounded-lg text-sm"
+                    value={editCategory}
+                    onChange={e => setEditCategory(e.target.value as TaskCategory)}
+                  >
+                    {categories.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="px-3 py-2 border rounded-lg text-sm"
+                    value={editPriority}
+                    onChange={e => setEditPriority(e.target.value as TaskPriority)}
+                  >
+                    {priorities.map(p => (
+                      <option key={p} value={p}>{getPriorityText(p)}优先级</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="number"
+                    min={0}
+                    className="px-3 py-2 border rounded-lg text-sm"
+                    placeholder="预计时长（分钟）"
+                    value={editDuration}
+                    onChange={e => setEditDuration(Number(e.target.value))}
+                  />
+                  <input
+                    type="date"
+                    className="px-3 py-2 border rounded-lg text-sm"
+                    value={editDueDateStr}
+                    onChange={e => setEditDueDateStr(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button onClick={() => setEditingTask(null)} className="px-4 py-2 text-sm text-gray-600">取消</button>
+                <button onClick={saveEdit} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg">保存</button>
+              </div>
+            </div>
           </div>
         )}
       </div>
