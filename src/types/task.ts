@@ -9,6 +9,7 @@ export interface Task {
   completedAt?: Date;
   createdAt: Date;
   mbtiOptimization?: MBTITaskOptimization;
+  gtdStage?: GTDStage;
 }
 
 export interface MBTITaskOptimization {
@@ -64,4 +65,12 @@ export interface ParsedTask {
 export interface TaskInput {
   description: string;
   userMBTI: string;
+}
+
+export enum GTDStage {
+  INBOX = 'inbox',
+  CLARIFY = 'clarify',
+  ORGANIZE = 'organize',
+  EXECUTE = 'execute',
+  REVIEW = 'review'
 }
