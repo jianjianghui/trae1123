@@ -146,7 +146,7 @@ const MBTITest: React.FC<MBTITestProps> = ({ onComplete }) => {
             </div>
             <div>
               <p className="text-sm text-gray-500 mb-1">
-                维度 {currentQuestion + 1} / 4
+                维度 {currentQuestion + 1} / {mbtiQuestions.length}
               </p>
               <h2 className="text-xl font-semibold text-gray-800">{question.question}</h2>
             </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Target, Calendar, Filter, Trash2, Edit3, CheckCircle, Clock } from 'lucide-react';
 import { Task, TaskCategory, TaskPriority } from '../../types/task';
+import PomodoroTimer from '../timer/PomodoroTimer';
 
 interface TaskManagerProps {
   userMBTI: string;
@@ -30,6 +31,7 @@ const TaskManager: React.FC<TaskManagerProps> = ({ userMBTI }) => {
   ]);
   
   const [filter, setFilter] = useState<{ category?: TaskCategory; priority?: TaskPriority }>({});
+  const [showTimer, setShowTimer] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -187,6 +189,27 @@ const TaskManager: React.FC<TaskManagerProps> = ({ userMBTI }) => {
             <Plus className="w-4 h-4 mr-2" />
             添加任务
           </button>
+        </div>
+
+        {/* 番茄钟（可展开/收起） */}
+        <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-2 text-purple-600" />
+              <span className="text-sm font-medium text-gray-700">个性化番茄钟</span>
+            </div>
+            <button
+              onClick={() => setShowTimer(!showTimer)}
+              className="px-3 py-1 text-sm text-purple-600 hover:text-purple-800"
+            >
+              {showTimer ? '收起' : '展开'}
+            </button>
+          </div>
+          {showTimer && (
+            <div className="border rounded-lg">
+              <PomodoroTimer userMBTI={userMBTI} />
+            </div>
+          )}
         </div>
 
         {/* 过滤器 */}
